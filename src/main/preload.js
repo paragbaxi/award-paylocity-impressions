@@ -19,5 +19,15 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.once(channel, (event, ...args) => func(...args));
       }
     },
+    async challengeQuestionOnce(channel, func) {
+      const validChannels = ['challenge-question'];
+      if (validChannels.includes(channel)) {
+        // Deliberately strip event as it includes `sender`
+        ipcRenderer.once(channel, (event, ...args) => func(...args));
+      }
+    },
+    challengeQuestion() {
+      ipcRenderer.send('challenge-question', 'challenge-question');
+    },
   },
 });

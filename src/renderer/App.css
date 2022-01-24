@@ -3,7 +3,7 @@
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
 
-@import '~bootswatch/dist/minty/bootstrap.css';
+@import '~bootstrap/dist/css/bootstrap.css';
 
 /* body {
   position: relative;

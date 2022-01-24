@@ -17,6 +17,7 @@ import { autoUpdater } from 'electron-updater';
 import path from 'path';
 
 import MenuBuilder from './menu';
+import Paylocity, { Credentials } from './paylocity';
 import { resolveHtmlPath } from './util';
 
 export default class AppUpdater {
@@ -29,11 +30,19 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('paylocity-login', async (event, arg) => {
+const browser = new Paylocity();
+
+ipcMain.on('paylocity-login', async (event, arg: Credentials) => {
   // const msgTemplate = (key: string, value: string) => `{key}: ${value}`;
   // console.log(msgTemplate(arg.username));
   console.log(JSON.stringify(arg));
   // event.reply('ipc-example', msgTemplate('pong'));
+  const loginResult = await browser.tryLogin(arg);
+  console.log(JSON.stringify(loginResult));
+  if (!loginResult.loggedIn) {
+    console.log('should say message');
+    console.log(loginResult.message);
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {

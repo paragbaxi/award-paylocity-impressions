@@ -1,4 +1,4 @@
-import 'bootswatch/dist/minty/bootstrap.min.css';
+// import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import 'bootstrap';
 
@@ -7,14 +7,18 @@ import { MemoryRouter as Router, Route, Routes } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
 
 const Hello = () => {
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (
+    event
+  ) => {
     const formData = new FormData(event.currentTarget);
     event.preventDefault();
-    window.electron.ipcRenderer.paylocityLogin({
+    const loginStatus = await window.electron.ipcRenderer.paylocityLogin({
       companyId: formData.get('companyId'),
-      email: formData.get('email'),
+      username: formData.get('username'),
       password: formData.get('password'),
     });
+    console.log(loginStatus);
+    console.log(JSON.stringify(loginStatus));
   };
   return (
     <div className="container">
@@ -33,19 +37,18 @@ const Hello = () => {
           </label>
         </div>
         <div className="mb-3">
-          <label htmlFor="InputEmail" className="form-label">
-            Email address
+          <label htmlFor="InputUsername" className="form-label">
+            Username
             <input
-              type="email"
+              type="text"
               className="form-control"
-              id="InputEmail"
-              aria-describedby="emailHelp"
-              placeholder="Enter your email"
-              name="email"
+              id="InputUsername"
+              placeholder="Enter your username"
+              name="username"
             />
           </label>
           <div id="emailHelp" className="form-text">
-            We will never share your email with anyone else.
+            We will never share your username with anyone else.
           </div>
         </div>
         <div className="mb-3">
@@ -64,34 +67,6 @@ const Hello = () => {
           Login
         </button>
       </form>
-
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
     </div>
   );
 };
