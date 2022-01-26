@@ -6,14 +6,22 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.send('paylocity-login', login);
     },
     on(channel, func) {
-      const validChannels = ['ipc-example'];
+      const validChannels = [
+        'ipc-example',
+        'paylocity-login',
+        'challenge-question',
+      ];
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         ipcRenderer.on(channel, (event, ...args) => func(...args));
       }
     },
     once(channel, func) {
-      const validChannels = ['ipc-example'];
+      const validChannels = [
+        'ipc-example',
+        'paylocity-login',
+        'challenge-question',
+      ];
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         ipcRenderer.once(channel, (event, ...args) => func(...args));
@@ -26,8 +34,8 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.once(channel, (event, ...args) => func(...args));
       }
     },
-    challengeQuestion() {
-      ipcRenderer.send('challenge-question', 'challenge-question');
+    challengeQuestion(answer) {
+      ipcRenderer.send('challenge-question', answer);
     },
   },
 });

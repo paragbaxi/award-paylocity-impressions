@@ -32,19 +32,6 @@ let mainWindow: BrowserWindow | null = null;
 
 const browser = new Paylocity();
 
-ipcMain.on('paylocity-login', async (event, arg: Credentials) => {
-  // const msgTemplate = (key: string, value: string) => `{key}: ${value}`;
-  // console.log(msgTemplate(arg.username));
-  console.log(JSON.stringify(arg));
-  // event.reply('ipc-example', msgTemplate('pong'));
-  const loginResult = await browser.tryLogin(arg);
-  console.log(JSON.stringify(loginResult));
-  if (!loginResult.loggedIn) {
-    console.log('should say message');
-    console.log(loginResult.message);
-  }
-});
-
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -122,6 +109,18 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  ipcMain.on('paylocity-login', async (event, arg: Credentials) => {
+    // const msgTemplate = (key: string, value: string) => `{key}: ${value}`;
+    // console.log(msgTemplate(arg.username));
+    console.log(JSON.stringify(arg));
+    // event.reply('ipc-example', msgTemplate('pong'));
+    const loginResult = await browser.tryLogin(arg);
+    console.log(JSON.stringify(loginResult));
+    if (!loginResult.loggedIn) {
+      mainWindow?.webContents.send('challenge-question', loginResult.message);
+    }
+  });
 };
 
 /**

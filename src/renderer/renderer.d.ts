@@ -5,6 +5,7 @@ export interface IElectronAPI {
     email: string;
     password: string;
   }): Promise<boolean>;
+  challengeQuestion(answer: string): Promise<boolean>;
 }
 
 declare global {

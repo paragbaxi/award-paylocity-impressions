@@ -2,11 +2,33 @@
 import './App.css';
 import 'bootstrap';
 
+import React, { useEffect, useState } from 'react';
+import { Button } from 'react-bootstrap';
+import Modal from 'react-bootstrap/Modal';
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom';
 
 import icon from '../../assets/icon.svg';
 
 const Hello = () => {
+  const [challenge, setChallenge] = useState('');
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  useEffect(() => {
+    window.electron.ipcRenderer.on(
+      'challenge-question',
+      (challengeQuestion: any) => {
+        console.log(
+          `this is the renderer thread, received ${challengeQuestion} from main thread`
+        );
+        setChallenge(challengeQuestion);
+        handleShow();
+      }
+    );
+  });
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (
     event
   ) => {
@@ -17,8 +39,8 @@ const Hello = () => {
       username: formData.get('username'),
       password: formData.get('password'),
     });
-    console.log(loginStatus);
-    console.log(JSON.stringify(loginStatus));
+    // console.log(loginStatus);
+    // console.log(JSON.stringify(loginStatus));
   };
   return (
     <div className="container">
@@ -67,6 +89,23 @@ const Hello = () => {
           Login
         </button>
       </form>
+      <Modal
+        show={show}
+        onHide={handleClose}
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Challenge Question</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{challenge}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button variant="primary">Understood</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
