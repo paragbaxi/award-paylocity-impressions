@@ -121,6 +121,18 @@ const createWindow = async () => {
       mainWindow?.webContents.send('challenge-question', loginResult.message);
     }
   });
+
+  ipcMain.on('challenge-answer', async (event, arg: string) => {
+    // const msgTemplate = (key: string, value: string) => `{key}: ${value}`;
+    // console.log(msgTemplate(arg.username));
+    console.log(JSON.stringify(arg));
+    // event.reply('ipc-example', msgTemplate('pong'));
+    // const loginResult = await browser.tryLogin(arg);
+    // console.log(JSON.stringify(loginResult));
+    // if (!loginResult.loggedIn) {
+    //   mainWindow?.webContents.send('challenge-question', loginResult.message);
+    // }
+  });
 };
 
 /**

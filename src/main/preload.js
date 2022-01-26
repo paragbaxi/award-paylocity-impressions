@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electron', {
         'ipc-example',
         'paylocity-login',
         'challenge-question',
+        'challenge-answer',
       ];
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
@@ -21,6 +22,7 @@ contextBridge.exposeInMainWorld('electron', {
         'ipc-example',
         'paylocity-login',
         'challenge-question',
+        'challenge-answer',
       ];
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
@@ -34,8 +36,11 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.once(channel, (event, ...args) => func(...args));
       }
     },
-    challengeQuestion(answer) {
-      ipcRenderer.send('challenge-question', answer);
+    challengeQuestion(question) {
+      ipcRenderer.send('challenge-question', question);
+    },
+    challengeAnswer(answer) {
+      ipcRenderer.send('challenge-answer', answer);
     },
   },
 });

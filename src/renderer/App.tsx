@@ -29,9 +29,22 @@ const Hello = () => {
     );
   });
 
+  const handleChallengeSubmit: React.FormEventHandler<HTMLFormElement> = async (
+    event
+  ) => {
+    const formData = new FormData(event.currentTarget);
+    event.preventDefault();
+    await window.electron.ipcRenderer.challengeAnswer(
+      formData.get('challengeAnswer')
+    );
+    // console.log(loginStatus);
+    // console.log(JSON.stringify(loginStatus));
+  };
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (
     event
   ) => {
+    handleClose();
     const formData = new FormData(event.currentTarget);
     event.preventDefault();
     const loginStatus = await window.electron.ipcRenderer.paylocityLogin({
@@ -42,11 +55,12 @@ const Hello = () => {
     // console.log(loginStatus);
     // console.log(JSON.stringify(loginStatus));
   };
+
   return (
     <div className="container">
       <form onSubmit={handleSubmit}>
         <h1>Login</h1>
-        <div className="mb-3">
+        <div>
           <label htmlFor="InputCompanyId" className="form-label">
             Company ID
             <input
@@ -58,7 +72,7 @@ const Hello = () => {
             />
           </label>
         </div>
-        <div className="mb-3">
+        <div>
           <label htmlFor="InputUsername" className="form-label">
             Username
             <input
@@ -73,7 +87,7 @@ const Hello = () => {
             We will never share your username with anyone else.
           </div>
         </div>
-        <div className="mb-3">
+        <div>
           <label htmlFor="InputPassword" className="form-label">
             Password
             <input
@@ -94,16 +108,33 @@ const Hello = () => {
         onHide={handleClose}
         backdrop="static"
         keyboard={false}
+        size="lg"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>Challenge Question</Modal.Title>
+          <Modal.Title id="contained-modal-title-vcenter">
+            Challenge Question
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>{challenge}</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary">Understood</Button>
+          <form onSubmit={handleChallengeSubmit}>
+            <label htmlFor="InputChallengeAnswer" className="form-label">
+              <input
+                className="challenge-answer"
+                id="InputChallengeAnswer"
+                type="text"
+                placeholder="Enter your challenge answer"
+                aria-label="default input example"
+                name="challengeAnswer"
+              />
+            </label>
+
+            <Button variant="primary" type="submit" className="btn btn-primary">
+              Submit
+            </Button>
+          </form>
         </Modal.Footer>
       </Modal>
     </div>
