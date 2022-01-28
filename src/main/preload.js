@@ -3,7 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electron', {
   ipcRenderer: {
     paylocityLogin(loginDetails) {
-      ipcRenderer.send('paylocity-login', loginDetails);
+      ipcRenderer.invoke('paylocity-login', loginDetails);
     },
     on(channel, func) {
       const validChannels = ['paylocity-login'];

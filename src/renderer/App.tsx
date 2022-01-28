@@ -44,7 +44,7 @@ const Hello = () => {
     //   console.log(`Received login-successful from main thread`);
     //   setLoggedIn(true);
     // });
-  });
+  }, []);
 
   const handleChallengeSubmit: React.FormEventHandler<HTMLFormElement> = async (
     event
