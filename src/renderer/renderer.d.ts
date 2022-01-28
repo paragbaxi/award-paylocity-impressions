@@ -5,6 +5,9 @@ export interface IElectronAPI {
     email: string;
     password: string;
   }): Promise<boolean>;
+  challengeQuestion(question: string): Promise<boolean>;
+  challengeAnswer(answer: string): Promise<boolean>;
+  // loginSuccessful(): void;
 }
 
 declare global {
