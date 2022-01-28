@@ -1,4 +1,4 @@
-import { Browser, chromium } from 'playwright';
+import { Browser, chromium, Page } from 'playwright';
 
 export interface Credentials {
   companyId: string;
@@ -23,6 +23,8 @@ class Paylocity {
   private loggedIn: boolean = false;
 
   private browser!: Browser;
+
+  private page!: Page;
 
   // public async init() {
   //   this.browserVisible = await chromium.launch({
@@ -64,10 +66,30 @@ class Paylocity {
   ): Promise<LoginResult> {
     await this.browserSetup();
     const page = await this.browser.newPage();
-    const navigationPromise = page.waitForNavigation();
     let message;
+    let url;
 
-    await page.goto('https://access.paylocity.com/');
+    await page.goto(
+      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
+    );
+    url = await page.url();
+    await url;
+    console.log(`url: ${url}`);
+    try {
+      if (
+        url ===
+        'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
+      ) {
+        this.loggedIn = true;
+        return { loggedIn: this.loggedIn, message: 'Successful' };
+      }
+    } catch (e) {
+      console.log(`Not logged in: ${url}`);
+    }
+
+    if (!url.startsWith('https://access.paylocity.com/')) {
+      await page.goto('https://access.paylocity.com/');
+    }
 
     await page.waitForSelector('#CompanyId');
     await page.click('#CompanyId');
@@ -80,10 +102,10 @@ class Paylocity {
 
     await page.keyboard.press('Enter');
 
-    await navigationPromise;
+    await page.waitForNavigation();
+    url = await page.url();
 
     try {
-      const url = await page.url();
       console.log(url);
       await page.waitForURL(
         'https://login.paylocity.com/https://login.paylocity.com/**',
@@ -91,49 +113,71 @@ class Paylocity {
       );
       // browser already remembered
       message = '';
-      return { loggedIn: true, message };
+      this.loggedIn = true;
+      return { loggedIn: this.loggedIn, message };
     } catch {
-      const url = await page.url();
+      url = await page.url();
       console.log(url);
-      // page.locator('text=Verify your identity');
       if (url === 'https://access.paylocity.com/ChallengeQuestion') {
         // <label for="ChallengeAnswer">This is the Challenge Question</label>
         console.log('url: challengequestion');
         message = await page.locator('[for="ChallengeAnswer"]').innerText();
         console.log(message);
+        this.page = page;
         return { loggedIn: false, message };
       }
       message = 'Unknown error';
-      return { loggedIn: false, message };
+      this.loggedIn = false;
+      return { loggedIn: this.loggedIn, message };
     }
   }
 
-  public async ChallengeQuestion(): Promise<LoginResult> {
-    await this.browserSetup();
-    const page = await this.browser.newPage();
-    const navigationPromise = page.waitForNavigation();
+  public async tryChallenge(challengeAnswer: string): Promise<LoginResult> {
+    const { page } = this;
+
     try {
-      await page.waitForSelector(
-        '.c-header > .header-nav > .sub-menu > li:nth-child(5) > a'
-      );
-      await page.type('#ChallengeAnswer', '');
-    } catch {
-      return { loggedIn: false, message: 'Unsuccessful' };
+      await page.type('#ChallengeAnswer', challengeAnswer);
+      await page.keyboard.press('Enter');
+
+      await page.waitForNavigation();
+
+      const url = await page.url();
+      console.log(`url: ${url}`);
+      if (url === 'https://access.paylocity.com/ChallengeQuestion') {
+        // <label for="ChallengeAnswer">This is the Challenge Question</label>
+        const message = await page
+          .locator('[for="ChallengeAnswer"]')
+          .innerText();
+        console.log(message);
+        this.page = page;
+        this.loggedIn = false;
+        return { loggedIn: this.loggedIn, message };
+      }
+
+      await page.waitForURL('https://access.paylocity.com/**');
+    } catch (e) {
+      console.log(e);
+      this.loggedIn = false;
+      return { loggedIn: this.loggedIn, message: 'Unsuccessful' };
     }
 
     // Save signed-in state to 'state.json'.
     await page.context().storageState({ path: 'state.json' });
     this.loggedIn = true;
-    return { loggedIn: false, message: 'Success' };
+    return { loggedIn: this.loggedIn, message: 'Successful' };
   }
 
-  public async sendImpression() {
+  public async sendImpression(): Promise<boolean> {
+    if (!this.loggedIn) {
+      await this.login();
+      return false;
+    }
     const page = await this.browser.newPage();
-    const navigationPromise = page.waitForNavigation();
+    await page.waitForNavigation();
     await page.click(
       '.c-header > .header-nav > .sub-menu > li:nth-child(5) > a'
     );
-    await navigationPromise;
+    await page.waitForNavigation();
 
     await page.waitForSelector(
       '.row > #panel-action-buttons > .type-cardtitle:nth-child(1) > .button > .hidden-xs'
@@ -142,6 +186,7 @@ class Paylocity {
     await page.waitForTimeout(1000);
     await page.close();
     await this.browser.close();
+    return true;
   }
 }
 export default Paylocity;
