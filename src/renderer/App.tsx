@@ -1,4 +1,3 @@
-// import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import 'bootstrap';
 
@@ -8,6 +7,7 @@ import Modal from 'react-bootstrap/Modal';
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom';
 
 import icon from '../../assets/icon.svg';
+import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
 
 const Hello = () => {
   const [challenge, setChallenge] = useState('');
@@ -25,8 +25,10 @@ const Hello = () => {
 
   useEffect(() => {
     window.electron.ipcRenderer.on(
-      'challenge-question',
-      (challengeQuestion: any) => {
+      'paylocity-login',
+      (loginDetails: LoginDetails) => {
+        if (!loginDetails.challenge) return;
+        const challengeQuestion = loginDetails.challenge;
         console.log(`Received ${challengeQuestion} from main thread`);
         if (challengeQuestion === 'logged in') {
           console.log(`Received login-successful from main thread`);
@@ -50,9 +52,11 @@ const Hello = () => {
     const formData = new FormData(event.currentTarget);
     event.preventDefault();
     setChallengeDisabled(true);
-    await window.electron.ipcRenderer.challengeAnswer(
-      formData.get('challengeAnswer')
-    );
+    const challengeAnswer = formData.get('challengeAnswer');
+    await window.electron.ipcRenderer.paylocityLogin({
+      status: PaylocityLoginStatus.ChallengeLogin,
+      challenge: challengeAnswer,
+    });
     handleClose();
     setChallengeDisabled(false);
     // console.log(loginStatus);
@@ -66,9 +70,12 @@ const Hello = () => {
     const formData = new FormData(event.currentTarget);
     event.preventDefault();
     const loginStatus = await window.electron.ipcRenderer.paylocityLogin({
-      companyId: formData.get('companyId'),
-      username: formData.get('username'),
-      password: formData.get('password'),
+      status: PaylocityLoginStatus.Login,
+      credentials: {
+        companyId: formData.get('companyId'),
+        username: formData.get('username'),
+        password: formData.get('password'),
+      },
     });
     // console.log(loginStatus);
     // console.log(JSON.stringify(loginStatus));
