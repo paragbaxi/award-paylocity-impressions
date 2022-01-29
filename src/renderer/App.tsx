@@ -2,7 +2,7 @@ import './App.css';
 import 'bootstrap';
 
 import React, { useEffect, useState } from 'react';
-import { Button } from 'react-bootstrap';
+import { Alert, Button } from 'react-bootstrap';
 import Modal from 'react-bootstrap/Modal';
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom';
 
@@ -15,6 +15,7 @@ const Hello = () => {
   const [disabled, setDisabled] = useState(false);
   const [challengeDisabled, setChallengeDisabled] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [incorrectCreds, setIncorrectCreds] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -27,6 +28,16 @@ const Hello = () => {
     window.electron.ipcRenderer.on(
       'paylocity-login',
       (loginDetails: LoginDetails) => {
+        console.log(`loginDetails: ${JSON.stringify(loginDetails)}`);
+        if (
+          loginDetails.status === PaylocityLoginStatus.Login &&
+          loginDetails.challenge === 'Unsuccessful'
+        ) {
+          setIncorrectCreds(true);
+          setDisabled(false);
+          return;
+        }
+
         if (!loginDetails.challenge) return;
         const challengeQuestion = loginDetails.challenge;
         console.log(`Received ${challengeQuestion} from main thread`);
@@ -66,6 +77,7 @@ const Hello = () => {
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (
     event
   ) => {
+    setIncorrectCreds(false);
     setDisabled(true);
     const formData = new FormData(event.currentTarget);
     event.preventDefault();
@@ -90,13 +102,15 @@ const Hello = () => {
           <form onSubmit={handleSubmit}>
             <h1>Login</h1>
             <div>
+              <Alert variant="danger" show={incorrectCreds}>
+                The credentials provided are incorrect
+              </Alert>
               <label htmlFor="InputCompanyId" className="form-label">
                 Company ID
                 <input
                   type="text"
                   className="form-control"
                   id="InputCompanyId"
-                  placeholder="Enter your Company ID"
                   name="companyId"
                   disabled={disabled}
                 />
@@ -109,7 +123,6 @@ const Hello = () => {
                   type="text"
                   className="form-control"
                   id="InputUsername"
-                  placeholder="Enter your username"
                   name="username"
                   disabled={disabled}
                 />
@@ -125,7 +138,6 @@ const Hello = () => {
                   type="password"
                   className="form-control"
                   id="InputPassword"
-                  placeholder="Enter your password"
                   name="password"
                   disabled={disabled}
                 />

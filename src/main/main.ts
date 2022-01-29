@@ -33,6 +33,13 @@ export default class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 const paylocity = new Paylocity();
+(async () => {
+  try {
+    await paylocity.init();
+  } catch (e) {
+    // Deal with the fact the chain failed
+  }
+})();
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');

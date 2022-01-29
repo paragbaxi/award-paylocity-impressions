@@ -9,12 +9,12 @@ const auth = async (
   loginDetails: LoginDetails
 ) => {
   if (!mainWindow) return;
-  console.log(JSON.stringify(loginDetails));
+  console.log(`loginDetails: ${JSON.stringify(loginDetails)}`);
   if (loginDetails.status === PaylocityLoginStatus.Login) {
     if (!loginDetails.credentials) return;
     const loginResult = await paylocity.tryLogin(loginDetails.credentials);
     await loginResult;
-    console.log(JSON.stringify(loginResult));
+    console.log(`loginResult: ${JSON.stringify(loginResult)}`);
     if (loginResult.status === LoginStatus.Challenge) {
       if (!loginResult.message) return;
       mainWindow.webContents.send('paylocity-login', {
@@ -25,7 +25,7 @@ const auth = async (
     }
     if (loginResult.status === LoginStatus.Successful) {
       mainWindow.webContents.send('paylocity-login', {
-        status: PaylocityLoginStatus.ChallengeLogin,
+        status: PaylocityLoginStatus.Login,
         challenge: 'logged in',
       });
       return;
@@ -49,12 +49,12 @@ const auth = async (
         status: PaylocityLoginStatus.ChallengeLogin,
         challenge: loginResult.message,
       });
-    } else {
-      mainWindow.webContents.send('paylocity-login', {
-        status: PaylocityLoginStatus.ChallengeLogin,
-        challenge: 'logged in',
-      });
+      return;
     }
+    mainWindow.webContents.send('paylocity-login', {
+      status: PaylocityLoginStatus.ChallengeLogin,
+      challenge: 'logged in',
+    });
   }
 };
 
