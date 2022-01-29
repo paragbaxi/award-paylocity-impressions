@@ -1,13 +1,10 @@
+import { Credentials } from 'main/paylocity';
+
+import { LoginDetails } from '../interfaces';
+
 export interface IElectronAPI {
   ipcRenderer: any;
-  paylocityLogin(arg0: {
-    companyId: string;
-    email: string;
-    password: string;
-  }): Promise<boolean>;
-  challengeQuestion(question: string): Promise<boolean>;
-  challengeAnswer(answer: string): Promise<boolean>;
-  // loginSuccessful(): void;
+  paylocityLogin(loginDetails: LoginDetails): Promise<boolean>;
 }
 
 declare global {

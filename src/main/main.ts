@@ -16,8 +16,10 @@ import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 
+import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
+import auth from './auth';
 import MenuBuilder from './menu';
-import Paylocity, { Credentials, LoginResult } from './paylocity';
+import Paylocity, { Credentials, LoginResult, LoginStatus } from './paylocity';
 import { resolveHtmlPath } from './util';
 
 export default class AppUpdater {
@@ -31,6 +33,13 @@ export default class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 const paylocity = new Paylocity();
+(async () => {
+  try {
+    await paylocity.init();
+  } catch (e) {
+    // Deal with the fact the chain failed
+  }
+})();
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -110,37 +119,13 @@ const createWindow = async () => {
   // eslint-disable-next-line
   new AppUpdater();
 
-  ipcMain.on('paylocity-login', async (event, arg: Credentials) => {
-    // const msgTemplate = (key: string, value: string) => `{key}: ${value}`;
-    // console.log(msgTemplate(arg.username));
-    console.log(JSON.stringify(arg));
-    // event.reply('ipc-example', msgTemplate('pong'));
-    const loginResult = await paylocity.tryLogin(arg);
-    await loginResult;
-    console.log(JSON.stringify(loginResult));
-    if (!loginResult.loggedIn) {
-      mainWindow?.webContents.send('challenge-question', loginResult.message);
-    } else {
-      mainWindow?.webContents.send('challenge-question', 'logged in');
+  ipcMain.handle(
+    'paylocity-login',
+    async (event, loginDetails: LoginDetails) => {
+      // fdas
+      return auth(mainWindow, paylocity, loginDetails);
     }
-  });
-
-  ipcMain.on('challenge-answer', async (event, challengeAnswer: string) => {
-    // const msgTemplate = (key: string, value: string) => `{key}: ${value}`;
-    // console.log(msgTemplate(challengeAnswer.username));
-    console.log(challengeAnswer);
-    const loginResult = await paylocity.tryChallenge(challengeAnswer);
-    await loginResult;
-    console.log(JSON.stringify(loginResult));
-    if (!loginResult.loggedIn) {
-      mainWindow?.webContents.send('challenge-question', loginResult.message);
-    } else {
-      mainWindow?.webContents.send('challenge-question', 'logged in');
-    }
-    // if (!loginResult.loggedIn) {
-    //   mainWindow?.webContents.send('challenge-question', loginResult.message);
-    // }
-  });
+  );
 };
 
 /**
