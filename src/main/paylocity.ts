@@ -7,8 +7,17 @@ export interface Credentials {
 
   password: string;
 }
+
+export enum LoginStatus {
+  Successful = 'SUCCESSFUL',
+  Unsuccessful = 'UNSUCCESSFUL',
+  Challenge = 'CHALLENGE',
+  Locked = 'LOCKED',
+}
 export interface LoginResult {
   loggedIn: boolean;
+
+  status: LoginStatus;
 
   message: string | undefined;
 }
@@ -81,13 +90,18 @@ class Paylocity {
         'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
       ) {
         this.loggedIn = true;
-        return { loggedIn: this.loggedIn, message: 'Successful' };
+        return {
+          loggedIn: this.loggedIn,
+          status: LoginStatus.Successful,
+          message: 'Successful',
+        };
       }
     } catch (e) {
       console.log(`Not logged in: ${url}`);
     }
 
     if (!url.startsWith('https://access.paylocity.com/')) {
+      console.log(`url goto: ${url}`);
       await page.goto('https://access.paylocity.com/');
     }
 
@@ -114,7 +128,11 @@ class Paylocity {
       // browser already remembered
       message = '';
       this.loggedIn = true;
-      return { loggedIn: this.loggedIn, message };
+      return {
+        loggedIn: this.loggedIn,
+        status: LoginStatus.Successful,
+        message,
+      };
     } catch {
       url = await page.url();
       console.log(url);
@@ -124,11 +142,15 @@ class Paylocity {
         message = await page.locator('[for="ChallengeAnswer"]').innerText();
         console.log(message);
         this.page = page;
-        return { loggedIn: false, message };
+        return { loggedIn: false, status: LoginStatus.Challenge, message };
       }
       message = 'Unknown error';
       this.loggedIn = false;
-      return { loggedIn: this.loggedIn, message };
+      return {
+        loggedIn: this.loggedIn,
+        status: LoginStatus.Unsuccessful,
+        message,
+      };
     }
   }
 
@@ -151,20 +173,32 @@ class Paylocity {
         console.log(message);
         this.page = page;
         this.loggedIn = false;
-        return { loggedIn: this.loggedIn, message };
+        return {
+          loggedIn: this.loggedIn,
+          status: LoginStatus.Challenge,
+          message,
+        };
       }
 
       await page.waitForURL('https://access.paylocity.com/**');
     } catch (e) {
       console.log(e);
       this.loggedIn = false;
-      return { loggedIn: this.loggedIn, message: 'Unsuccessful' };
+      return {
+        loggedIn: this.loggedIn,
+        status: LoginStatus.Unsuccessful,
+        message: 'Unsuccessful',
+      };
     }
 
     // Save signed-in state to 'state.json'.
     await page.context().storageState({ path: 'state.json' });
     this.loggedIn = true;
-    return { loggedIn: this.loggedIn, message: 'Successful' };
+    return {
+      loggedIn: this.loggedIn,
+      status: LoginStatus.Successful,
+      message: 'Successful',
+    };
   }
 
   public async sendImpression(): Promise<boolean> {

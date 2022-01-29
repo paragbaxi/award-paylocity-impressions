@@ -17,8 +17,9 @@ import { autoUpdater } from 'electron-updater';
 import path from 'path';
 
 import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
+import auth from './auth';
 import MenuBuilder from './menu';
-import Paylocity, { Credentials, LoginResult } from './paylocity';
+import Paylocity, { Credentials, LoginResult, LoginStatus } from './paylocity';
 import { resolveHtmlPath } from './util';
 
 export default class AppUpdater {
@@ -114,43 +115,8 @@ const createWindow = async () => {
   ipcMain.handle(
     'paylocity-login',
     async (event, loginDetails: LoginDetails) => {
-      console.log(JSON.stringify(loginDetails));
-      if (loginDetails.status === PaylocityLoginStatus.Login) {
-        if (!loginDetails.credentials) return;
-        const loginResult = await paylocity.tryLogin(loginDetails.credentials);
-        await loginResult;
-        console.log(JSON.stringify(loginResult));
-        if (!loginResult.loggedIn) {
-          mainWindow?.webContents.send('paylocity-login', {
-            status: PaylocityLoginStatus.ChallengeLogin,
-            challenge: loginResult.message,
-          });
-        } else {
-          mainWindow?.webContents.send('paylocity-login', {
-            status: PaylocityLoginStatus.ChallengeLogin,
-            challenge: 'logged in',
-          });
-        }
-      } else if (loginDetails.status === PaylocityLoginStatus.ChallengeLogin) {
-        if (!loginDetails.challenge) return;
-        console.log(loginDetails.challenge);
-        const loginResult = await paylocity.tryChallenge(
-          loginDetails.challenge
-        );
-        await loginResult;
-        console.log(JSON.stringify(loginResult));
-        if (!loginResult.loggedIn) {
-          mainWindow?.webContents.send('paylocity-login', {
-            status: PaylocityLoginStatus.ChallengeLogin,
-            challenge: loginResult.message,
-          });
-        } else {
-          mainWindow?.webContents.send('paylocity-login', {
-            status: PaylocityLoginStatus.ChallengeLogin,
-            challenge: 'logged in',
-          });
-        }
-      }
+      // fdas
+      return auth(mainWindow, paylocity, loginDetails);
     }
   );
 };
