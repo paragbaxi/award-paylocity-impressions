@@ -61,7 +61,8 @@ class Paylocity {
 
   public async isLoggedIn(): Promise<boolean> {
     await this.page.goto(
-      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
+      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard',
+      { waitUntil: 'networkidle' }
     );
     const url = await this.page.url();
     await url;
@@ -88,7 +89,7 @@ class Paylocity {
     let url;
 
     const loggedIn = await this.isLoggedIn();
-    await loggedIn;
+    console.log(loggedIn);
     if (loggedIn) {
       return {
         loggedIn: this.loggedIn,
