@@ -1,6 +1,6 @@
 {
-  "name": "electron-react-boilerplate",
-  "description": "A foundation for scalable desktop apps",
+  "name": "paylocity-impressions",
+  "description": "Make awarding Paylocity impressions as easy as saying, \"thank you\".",
   "scripts": {
     "build": "concurrently \"npm run build:main\" \"npm run build:renderer\"",
     "build:main": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.main.prod.ts",
@@ -30,8 +30,8 @@
     ]
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "Paylocity Impressions",
+    "appId": "org.erb.PaylocityImpressions",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
@@ -89,47 +89,35 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate"
+      "owner": "paragbaxi",
+      "repo": "award-paylocity-impressions"
     }
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "git+https://github.com/paragbaxi/award-paylocity-impressions.git"
   },
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "Parag Baxi",
+    "email": "parag.baxi+award.paylocity.impressions@gmail.com",
+    "url": "https://github.com/paragbaxi/award-paylocity-impressions/"
   },
   "contributors": [
     {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
-    },
-    {
-      "name": "John Tran",
-      "email": "jptran318@gmail.com",
-      "url": "https://github.com/jooohhn"
+      "name": "Parag Baxi",
+      "email": "parag.baxi+award.paylocity.impressions@gmail.com",
+      "url": "https://github.com/paragbaxi"
     }
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/paragbaxi/award-paylocity-impressions/issues"
   },
   "keywords": [
-    "electron",
-    "boilerplate",
-    "react",
-    "typescript",
-    "ts",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "paylocity",
+    "impressions"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://github.com/paragbaxi/award-paylocity-impressions#readme",
   "jest": {
     "testURL": "http://localhost/",
     "testEnvironment": "jsdom",
@@ -205,6 +193,7 @@
     "lint-staged": "^12.1.4",
     "mini-css-extract-plugin": "^2.4.5",
     "opencollective-postinstall": "^2.0.3",
+    "playwright": "^1.18.1",
     "prettier": "^2.5.1",
     "react-refresh": "^0.11.0",
     "react-refresh-typescript": "^2.0.3",
@@ -231,7 +220,6 @@
     "electron-log": "^4.4.4",
     "electron-updater": "^4.6.5",
     "history": "^5.2.0",
-    "playwright": "^1.17.2",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.1",
     "react-dom": "^17.0.2",

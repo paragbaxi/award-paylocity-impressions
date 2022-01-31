@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Browser, chromium, Page } from 'playwright';
 
 export interface Credentials {
@@ -51,13 +52,29 @@ class Paylocity {
       slowMo: 50,
     });
     try {
-      await this.browser.newContext({
-        storageState: 'state.json',
-      });
-    } catch (err) {
+      this.page = await this.browser.newPage({ storageState: 'state.json' });
+    } catch (e) {
       // first time
+      console.log(`error: ${JSON.stringify(e)}`);
     }
-    this.page = await this.browser.newPage();
+  }
+
+  public async isLoggedIn(): Promise<boolean> {
+    await this.page.goto(
+      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
+    );
+    const url = await this.page.url();
+    await url;
+    console.log(`url: ${url}`);
+    if (
+      url ===
+      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
+    ) {
+      await this.page.context().storageState({ path: 'state.json' });
+      this.loggedIn = true;
+      return true;
+    }
+    return false;
   }
 
   private async login(
@@ -67,21 +84,12 @@ class Paylocity {
       password: this.credentials.password,
     }
   ): Promise<LoginResult> {
-    const { page } = this;
     let message;
     let url;
 
-    await page.goto(
-      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
-    );
-    url = await page.url();
-    await url;
-    console.log(`url: ${url}`);
-    if (
-      url ===
-      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
-    ) {
-      this.loggedIn = true;
+    const loggedIn = await this.isLoggedIn();
+    await loggedIn;
+    if (loggedIn) {
       return {
         loggedIn: this.loggedIn,
         status: LoginStatus.Successful,
@@ -89,27 +97,25 @@ class Paylocity {
       };
     }
 
+    url = await this.page.url();
     if (!url.startsWith('https://access.paylocity.com/')) {
       console.log(`url goto: ${url}`);
-      await page.goto('https://access.paylocity.com/');
+      await this.page.goto('https://access.paylocity.com/');
     }
 
-    await page.waitForSelector('#CompanyId');
-    await page.click('#CompanyId');
+    await this.page.waitForSelector('#CompanyId');
+    await this.page.click('#CompanyId');
+    await this.page.type('#CompanyId', credentials.companyId);
+    await this.page.type('#Username', credentials.username);
+    await this.page.type('#Password', credentials.password);
+    await this.page.keyboard.press('Enter');
 
-    await page.type('#CompanyId', credentials.companyId);
-
-    await page.type('#Username', credentials.username);
-
-    await page.type('#Password', credentials.password);
-
-    await page.keyboard.press('Enter');
-
-    // page.waitForResponse('https://access.paylocity.com/scripts/login.js?**');
+    // this.page.waitForResponse('https://access.paylocity.com/scripts/login.js?**');
     try {
-      await page.waitForNavigation({ timeout: 3000 });
+      await this.page.waitForNavigation({ timeout: 3000 });
     } catch (e) {
-      const incorrectCredentials = await page.locator(
+      console.log(`error: ${JSON.stringify(e)}`);
+      const incorrectCredentials = await this.page.locator(
         'text=The credentials provided are incorrect'
       );
       if (incorrectCredentials) {
@@ -123,15 +129,16 @@ class Paylocity {
       }
     }
 
-    url = await page.url();
+    url = await this.page.url();
 
     try {
       console.log(url);
-      await page.waitForURL(
+      await this.page.waitForURL(
         'https://login.paylocity.com/https://login.paylocity.com/**',
         { timeout: 2000 }
       );
       // browser already remembered
+      await this.page.context().storageState({ path: 'state.json' });
       message = '';
       this.loggedIn = true;
       return {
@@ -139,15 +146,17 @@ class Paylocity {
         status: LoginStatus.Successful,
         message,
       };
-    } catch {
-      url = await page.url();
+    } catch (e) {
+      console.log(`error: ${JSON.stringify(e)}`);
+      url = await this.page.url();
       console.log(url);
       if (url === 'https://access.paylocity.com/ChallengeQuestion') {
         // <label for="ChallengeAnswer">This is the Challenge Question</label>
         console.log('url: challengequestion');
-        message = await page.locator('[for="ChallengeAnswer"]').innerText();
+        message = await this.page
+          .locator('[for="ChallengeAnswer"]')
+          .innerText();
         console.log(message);
-        this.page = page;
         return { loggedIn: false, status: LoginStatus.Challenge, message };
       }
       message = 'Unknown error';
@@ -161,23 +170,21 @@ class Paylocity {
   }
 
   public async tryChallenge(challengeAnswer: string): Promise<LoginResult> {
-    const { page } = this;
-
     try {
-      await page.type('#ChallengeAnswer', challengeAnswer);
-      await page.keyboard.press('Enter');
+      await this.page.waitForSelector('#TrustThisDevice');
+      await this.page.click('#TrustThisDevice');
+      await this.page.type('#ChallengeAnswer', challengeAnswer);
+      await this.page.keyboard.press('Enter');
+      await this.page.waitForNavigation();
 
-      await page.waitForNavigation();
-
-      const url = await page.url();
+      const url = await this.page.url();
       console.log(`url: ${url}`);
       if (url === 'https://access.paylocity.com/ChallengeQuestion') {
         // <label for="ChallengeAnswer">This is the Challenge Question</label>
-        const message = await page
+        const message = await this.page
           .locator('[for="ChallengeAnswer"]')
           .innerText();
         console.log(message);
-        this.page = page;
         this.loggedIn = false;
         return {
           loggedIn: this.loggedIn,
@@ -186,9 +193,9 @@ class Paylocity {
         };
       }
 
-      await page.waitForURL('https://access.paylocity.com/**');
+      await this.page.waitForURL('https://access.paylocity.com/**');
     } catch (e) {
-      console.log(e);
+      console.log(`error: ${JSON.stringify(e)}`);
       this.loggedIn = false;
       return {
         loggedIn: this.loggedIn,
@@ -198,7 +205,7 @@ class Paylocity {
     }
 
     // Save signed-in state to 'state.json'.
-    await page.context().storageState({ path: 'state.json' });
+    await this.page.context().storageState({ path: 'state.json' });
     this.loggedIn = true;
     return {
       loggedIn: this.loggedIn,
@@ -212,19 +219,18 @@ class Paylocity {
       await this.login();
       return false;
     }
-    const page = await this.browser.newPage();
-    await page.waitForNavigation();
-    await page.click(
+    await this.page.waitForNavigation();
+    await this.page.click(
       '.c-header > .header-nav > .sub-menu > li:nth-child(5) > a'
     );
-    await page.waitForNavigation();
+    await this.page.waitForNavigation();
 
-    await page.waitForSelector(
+    await this.page.waitForSelector(
       '.row > #panel-action-buttons > .type-cardtitle:nth-child(1) > .button > .hidden-xs'
     );
 
-    await page.waitForTimeout(1000);
-    await page.close();
+    await this.page.waitForTimeout(1000);
+    await this.page.close();
     await this.browser.close();
     return true;
   }
