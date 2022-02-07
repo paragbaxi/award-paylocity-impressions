@@ -18,8 +18,9 @@ import path from 'path';
 
 import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
 import auth from './auth';
+import { getCreds } from './credentials';
 import MenuBuilder from './menu';
-import Paylocity, { Credentials, LoginResult, LoginStatus } from './paylocity';
+import Paylocity from './paylocity';
 import { resolveHtmlPath } from './util';
 
 export default class AppUpdater {
@@ -33,9 +34,18 @@ export default class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 const paylocity = new Paylocity();
+const credentials = getCreds();
 (async () => {
   try {
     await paylocity.init();
+    const stayLoggedIn = async () => {
+      auth(mainWindow, paylocity, {
+        status: PaylocityLoginStatus.Login,
+        credentials,
+      });
+    };
+    await stayLoggedIn();
+    setInterval(await stayLoggedIn, 25 * 60 * 1000);
   } catch (e) {
     // Deal with the fact the chain failed
   }
@@ -98,7 +108,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      mainWindow.show();
+      // mainWindow.show();
     }
   });
 
@@ -121,7 +131,7 @@ const createWindow = async () => {
 
   ipcMain.handle(
     'paylocity-login',
-    async (event, loginDetails: LoginDetails) => {
+    async (_event, loginDetails: LoginDetails) => {
       // fdas
       return auth(mainWindow, paylocity, loginDetails);
     }
