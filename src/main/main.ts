@@ -11,10 +11,11 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Tray } from 'electron';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
+import { title } from 'process';
 
 import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
 import auth from './auth';
@@ -32,6 +33,7 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 
 const paylocity = new Paylocity();
 const credentials = getCreds();
@@ -98,6 +100,9 @@ const createWindow = async () => {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+
+  tray = new Tray(getAssetPath('icon_Template.png'));
+  // tray.setTitle('gratitude');
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
