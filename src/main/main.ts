@@ -37,21 +37,6 @@ let tray: Tray | null = null;
 
 const paylocity = new Paylocity();
 const credentials = getCreds();
-(async () => {
-  try {
-    await paylocity.init();
-    const stayLoggedIn = async () => {
-      auth(mainWindow, paylocity, {
-        status: PaylocityLoginStatus.Login,
-        credentials,
-      });
-    };
-    await stayLoggedIn();
-    setInterval(await stayLoggedIn, 25 * 60 * 1000);
-  } catch (e) {
-    // Deal with the fact the chain failed
-  }
-})();
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -101,15 +86,30 @@ const createWindow = async () => {
     },
   });
 
-  tray = new Tray(getAssetPath('icon_Template.png'));
-  // tray.setTitle('gratitude');
-
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
+    (async () => {
+      try {
+        await paylocity.init();
+        const stayLoggedIn = async () => {
+          auth(mainWindow, paylocity, {
+            status: PaylocityLoginStatus.Login,
+            credentials,
+          });
+        };
+        await stayLoggedIn();
+        setInterval(await stayLoggedIn, 25 * 60 * 1000);
+      } catch (e) {
+        // Deal with the fact the chain failed
+      }
+    })();
+    tray = new Tray(getAssetPath('icon_Template.png'));
+    // tray.setTitle('gratitude');
+
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {

@@ -81,7 +81,10 @@ class Paylocity {
         { waitUntil: 'networkidle' }
       );
       const url = await this.page.url();
-      console.log(`url: ${url}`);
+      console.log(`isLoggedIn.url: ${url}`);
+      if (url.startsWith('https://access.paylocity.com/?')) {
+        // TODO figure out how to fix this
+      }
       // console.log('waiting...');
       // await this.page.waitForTimeout(10000);
     } catch (e) {

@@ -73,6 +73,7 @@ const auth = async (
       status: PaylocityLoginStatus.ChallengeLogin,
       challenge: 'logged in',
     });
+    if (paylocity.credentials) setCreds(paylocity.credentials);
     await new Promise((resolve) => setTimeout(resolve, 3000));
     mainWindow.hide();
   }
