@@ -39,17 +39,21 @@ class Paylocity {
 
   private page!: Page;
 
-  public async init() {
-    await this.browserSetup();
-  }
+  private browserImpressions!: Browser;
 
-  public async tryLogin(credentials: Credentials): Promise<LoginResult> {
+  private pageImpressions!: Page;
+
+  public init = async () => {
+    await this.browserSetup();
+  };
+
+  public tryLogin = async (credentials: Credentials): Promise<LoginResult> => {
     console.log(JSON.stringify(credentials));
     const status = await this.login(credentials);
     return status;
-  }
+  };
 
-  private async browserSetup() {
+  private browserSetup = async () => {
     this.browser = await chromium.launch({
       headless: !isDevelopment,
       slowMo: 50,
@@ -62,14 +66,14 @@ class Paylocity {
       this.page = await this.browser.newPage();
       await this.page.context().storageState({ path: 'state.json' });
     }
-  }
+  };
 
-  private async successfulLoginTasks(): Promise<void> {
+  private successfulLoginTasks = async (): Promise<void> => {
     this.loggedIn = true;
     this.page.context().storageState({ path: 'state.json' });
-  }
+  };
 
-  public async isLoggedIn(): Promise<boolean> {
+  public isLoggedIn = async (): Promise<boolean> => {
     console.log('isLoggedIn()');
     // await this.browser.startTracing(this.page, {
     //   path: `trace-${Date.now()}.json`,
@@ -102,15 +106,15 @@ class Paylocity {
     }
     // await this.browser.stopTracing();
     return false;
-  }
+  };
 
-  private async login(
+  private login = async (
     credentials: Credentials = {
       companyId: this.credentials.companyId,
       username: this.credentials.username,
       password: this.credentials.password,
     }
-  ): Promise<LoginResult> {
+  ): Promise<LoginResult> => {
     this.credentials.companyId = credentials.companyId;
     this.credentials.username = credentials.username;
     this.credentials.password = credentials.password;
@@ -131,6 +135,7 @@ class Paylocity {
     console.log(`loggedIn: ${loggedIn}`);
 
     if (loggedIn) {
+      this.successfulLoginTasks();
       return {
         loggedIn: this.loggedIn,
         status: LoginStatus.Successful,
@@ -189,9 +194,11 @@ class Paylocity {
       status: LoginStatus.Unsuccessful,
       message,
     };
-  }
+  };
 
-  public async tryChallenge(challengeAnswer: string): Promise<LoginResult> {
+  public tryChallenge = async (
+    challengeAnswer: string
+  ): Promise<LoginResult> => {
     try {
       await this.page.waitForSelector('#TrustThisDevice');
       const checked = await this.page.isChecked('#TrustThisDevice');
@@ -232,27 +239,37 @@ class Paylocity {
       status: LoginStatus.Successful,
       message: 'Successful',
     };
-  }
+  };
 
-  public async sendImpression(): Promise<boolean> {
+  public sendImpression = async (): Promise<boolean> => {
+    console.log(`loggedIn: ${this.loggedIn}`);
     if (!this.loggedIn) {
       await this.login();
       return false;
     }
-    await this.page.waitForNavigation();
-    await this.page.click(
-      '.c-header > .header-nav > .sub-menu > li:nth-child(5) > a'
-    );
-    await this.page.waitForNavigation();
+    this.browserImpressions = await chromium.launch({
+      headless: false,
+    });
 
-    await this.page.waitForSelector(
-      '.row > #panel-action-buttons > .type-cardtitle:nth-child(1) > .button > .hidden-xs'
+    try {
+      this.pageImpressions = await this.browserImpressions.newPage({
+        storageState: 'state.json',
+      });
+    } catch (e) {
+      // first time
+      console.log(`error: ${JSON.stringify(e)}`);
+      this.pageImpressions = await this.browserImpressions.newPage();
+      await this.pageImpressions.context().storageState({ path: 'state.json' });
+    }
+
+    this.pageImpressions.goto(
+      'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
     );
 
-    await this.page.waitForTimeout(1000);
-    await this.page.close();
-    await this.browser.close();
+    await this.pageImpressions.click('text=Award Impressions');
+    await this.pageImpressions.waitForNavigation();
+
     return true;
-  }
+  };
 }
 export default Paylocity;

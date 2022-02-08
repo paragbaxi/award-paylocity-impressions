@@ -108,7 +108,9 @@ const createWindow = async () => {
       }
     })();
     tray = new Tray(getAssetPath('icon_Template.png'));
-    // tray.setTitle('gratitude');
+    tray.setToolTip('Click to send gratitude');
+    tray.setIgnoreDoubleClickEvents(true);
+    tray.on('click', paylocity.sendImpression);
 
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
