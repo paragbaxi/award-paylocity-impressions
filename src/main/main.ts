@@ -11,15 +11,17 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Tray } from 'electron';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
+import { title } from 'process';
 
 import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
 import auth from './auth';
+import { getCreds } from './credentials';
 import MenuBuilder from './menu';
-import Paylocity, { Credentials, LoginResult, LoginStatus } from './paylocity';
+import Paylocity from './paylocity';
 import { resolveHtmlPath } from './util';
 
 export default class AppUpdater {
@@ -31,15 +33,10 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 
 const paylocity = new Paylocity();
-(async () => {
-  try {
-    await paylocity.init();
-  } catch (e) {
-    // Deal with the fact the chain failed
-  }
-})();
+const credentials = getCreds();
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -95,10 +92,30 @@ const createWindow = async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
+    (async () => {
+      try {
+        await paylocity.init();
+        const stayLoggedIn = async () => {
+          auth(mainWindow, paylocity, {
+            status: PaylocityLoginStatus.Login,
+            credentials,
+          });
+        };
+        await stayLoggedIn();
+        setInterval(await stayLoggedIn, 25 * 60 * 1000);
+      } catch (e) {
+        // Deal with the fact the chain failed
+      }
+    })();
+    tray = new Tray(getAssetPath('icon_Template.png'));
+    tray.setToolTip('Click to send gratitude');
+    tray.setIgnoreDoubleClickEvents(true);
+    tray.on('click', paylocity.sendImpression);
+
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      mainWindow.show();
+      // mainWindow.show();
     }
   });
 
@@ -121,7 +138,7 @@ const createWindow = async () => {
 
   ipcMain.handle(
     'paylocity-login',
-    async (event, loginDetails: LoginDetails) => {
+    async (_event, loginDetails: LoginDetails) => {
       // fdas
       return auth(mainWindow, paylocity, loginDetails);
     }
