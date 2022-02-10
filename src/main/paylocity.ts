@@ -66,6 +66,7 @@ class Paylocity {
       this.page = await this.browser.newPage();
       await this.page.context().storageState({ path: 'state.json' });
     }
+    // this.page = await this.browser.newPage();
   };
 
   private successfulLoginTasks = async (): Promise<void> => {
@@ -74,37 +75,65 @@ class Paylocity {
   };
 
   public isLoggedIn = async (): Promise<boolean> => {
-    console.log('isLoggedIn()');
-    // await this.browser.startTracing(this.page, {
-    //   path: `trace-${Date.now()}.json`,
-    //   screenshots: true,
-    // });
+    console.log('paylocity.isLoggedIn()');
+    let url;
     try {
       await this.page.goto(
-        'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard',
-        { waitUntil: 'networkidle' }
+        'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
       );
-      const url = await this.page.url();
+      url = await this.page.url();
       console.log(`isLoggedIn.url: ${url}`);
-      if (url.startsWith('https://access.paylocity.com/?')) {
-        // TODO figure out how to fix this
+      // await this.page.waitForTimeout(30000); // pause
+      if (
+        url.includes('redirect_uri=') &&
+        url.startsWith('https://access.paylocity.com/?')
+      ) {
+        try {
+          console.log('matches redirect');
+          await this.page.waitForNavigation();
+          url = await this.page.url();
+          console.log(`isLoggedIn.url: ${url}`);
+          if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
+            await this.page.waitForNavigation();
+            url = await this.page.url();
+            console.log(`isLoggedIn.url: ${url}`);
+          }
+        } catch (e) {
+          console.error(`error: ${JSON.stringify(e)}`);
+          console.log('At login with redirect.');
+          return false;
+        }
       }
-      // console.log('waiting...');
-      // await this.page.waitForTimeout(10000);
+      if (url.startsWith('https://access.paylocity.com/?')) {
+        console.log('waiting...');
+        await this.page.waitForURL(
+          'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
+        );
+        url = await this.page.url();
+        console.log(`isLoggedIn.url: ${url}`);
+      }
+      // await this.page.waitForTimeout(10000); // pause
     } catch (e) {
-      console.log(`error: ${JSON.stringify(e)}`);
-      // await this.browser.stopTracing();
+      console.error(`error: ${JSON.stringify(e)}`);
       return false;
     }
-    await this.page.reload();
-    const url = await this.page.url();
-    console.log(`url: ${url}`);
+    url = await this.page.url();
+    console.log(`url after paylocity.isLoggedIn.try: ${url}`);
+    if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
+      try {
+        this.page.waitForNavigation();
+        url = await this.page.url();
+      } catch (e) {
+        console.error(`error: ${JSON.stringify(e)}`);
+        // await this.browser.stopTracing();
+        return false;
+      }
+    }
     if (url.startsWith('https://login.paylocity.com/Escher')) {
       this.successfulLoginTasks();
-      // await this.browser.stopTracing();
       return true;
     }
-    // await this.browser.stopTracing();
+    console.log('end of isLoggedIn()');
     return false;
   };
 
@@ -159,9 +188,7 @@ class Paylocity {
     }
 
     // check for incorrect pw
-    const incorrectCredentials = await this.page.locator(
-      'text=The credentials provided are incorrect'
-    );
+    const incorrectCredentials = url === 'https://access.paylocity.com/';
     console.log(
       `incorrectCredentials: ${JSON.stringify(incorrectCredentials)}`
     );
@@ -262,12 +289,11 @@ class Paylocity {
       await this.pageImpressions.context().storageState({ path: 'state.json' });
     }
 
-    this.pageImpressions.goto(
+    await this.pageImpressions.goto(
       'https://login.paylocity.com/Escher/Escher_WebUI/EmployeeInformation/Impressions/Index/leaderboard'
     );
 
     await this.pageImpressions.click('text=Award Impressions');
-    await this.pageImpressions.waitForNavigation();
 
     return true;
   };

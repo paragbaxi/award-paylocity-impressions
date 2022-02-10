@@ -15,7 +15,6 @@ import { app, BrowserWindow, ipcMain, shell, Tray } from 'electron';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
-import { title } from 'process';
 
 import { LoginDetails, PaylocityLoginStatus } from '../interfaces';
 import auth from './auth';
