@@ -318,21 +318,22 @@ class Paylocity {
       await this.pageImpressions.context().storageState({ path: 'state.json' });
     }
 
-    await this.pageImpressions.goto(paylocityImpressionsUrl);
-
-    // eslint-disable-next-line prefer-const
     url = await this.pageImpressions.url();
-    console.log(`sendImpression.goto.url: ${url}`);
-    if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
-      await this.pageImpressions.waitForNavigation();
-      url = await this.pageImpressions.url();
-      console.log(`sendImpression.goto.waitForNavigation.url: ${url}`);
-    }
-    if (
-      url.startsWith('https://login.paylocity.com/Escher/') &&
-      url !== paylocityImpressionsUrl
-    )
+    console.log(`sendImpression.loadState.url: ${url}`);
+    if (url !== paylocityImpressionsUrl) {
       await this.pageImpressions.goto(paylocityImpressionsUrl);
+      console.log(`sendImpression.goto.url: ${url}`);
+      if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
+        await this.pageImpressions.waitForNavigation();
+        url = await this.pageImpressions.url();
+        console.log(`sendImpression.goto.waitForNavigation.url: ${url}`);
+      }
+    }
+
+    url = await this.pageImpressions.url();
+    if (url !== paylocityImpressionsUrl) {
+      await this.pageImpressions.goto(paylocityImpressionsUrl);
+    }
     await this.pageImpressions.click('text=Award Impressions');
 
     return true;
