@@ -62,6 +62,9 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+log.info('Hello, log');
+log.warn('Some problem appears kdjafjkldlkdfjalsdjflkajdsfklsajfdas');
+
 const createWindow = async () => {
   if (isDevelopment) {
     await installExtensions();
