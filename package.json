@@ -30,8 +30,8 @@
     ]
   },
   "build": {
-    "productName": "Paylocity Impressions",
-    "appId": "org.erb.PaylocityImpressions",
+    "productName": "Award Paylocity Impressions",
+    "appId": "org.erb.AwardPaylocityImpressions",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
