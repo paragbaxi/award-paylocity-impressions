@@ -1,7 +1,7 @@
 {
-  "name": "electron-react-boilerplate",
-  "version": "4.5.0",
-  "description": "A foundation for scalable desktop apps",
+  "name": "award-paylocity-impressions",
+  "version": "0.9.0",
+  "description": "Make awarding Paylocity impressions as easy as saying thank you",
   "main": "./dist/main/main.js",
   "author": {
     "name": "Parag Baxi",

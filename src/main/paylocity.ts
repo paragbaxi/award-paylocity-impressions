@@ -1,3 +1,4 @@
+import log from 'electron-log';
 /* eslint-disable no-console */
 import { Browser, chromium, Page } from 'playwright';
 
@@ -51,7 +52,7 @@ class Paylocity {
   };
 
   public tryLogin = async (credentials: Credentials): Promise<LoginResult> => {
-    console.log(JSON.stringify(credentials));
+    log.info(JSON.stringify(credentials));
     const status = await this.login(credentials);
     return status;
   };
@@ -63,10 +64,10 @@ class Paylocity {
     });
     try {
       this.page = await this.browser.newPage({ storageState: 'state.json' });
-      console.log('loaded state');
+      log.info('loaded state');
     } catch (e) {
       // first time
-      console.log(`error: ${JSON.stringify(e)}`);
+      log.info(`error: ${JSON.stringify(e)}`);
       this.page = await this.browser.newPage();
       await this.page.context().storageState({ path: 'state.json' });
     }
@@ -79,16 +80,16 @@ class Paylocity {
   };
 
   public isLoggedIn = async (): Promise<boolean> => {
-    console.log('paylocity.isLoggedIn()');
+    log.info('paylocity.isLoggedIn()');
     let url;
     try {
       await this.page.goto(paylocityImpressionsUrl);
       url = await this.page.url();
-      console.log(`isLoggedIn.url: ${url}`);
+      log.info(`isLoggedIn.url: ${url}`);
       if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
         await this.page.waitForNavigation();
         url = await this.page.url();
-        console.log(`isLoggedIn.url after Sso=True: ${url}`);
+        log.info(`isLoggedIn.url after Sso=True: ${url}`);
       }
       // await this.page.waitForTimeout(30000); // pause
       if (
@@ -96,42 +97,42 @@ class Paylocity {
         url.startsWith('https://access.paylocity.com/?')
       ) {
         try {
-          console.log('matches redirect');
+          log.info('matches redirect');
           await this.page.waitForNavigation();
           url = await this.page.url();
-          console.log(`isLoggedIn.url: ${url}`);
+          log.info(`isLoggedIn.url: ${url}`);
           if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
             await this.page.waitForNavigation();
             url = await this.page.url();
-            console.log(`isLoggedIn.url: ${url}`);
+            log.info(`isLoggedIn.url: ${url}`);
           } else {
             return false;
           }
         } catch (e) {
-          console.error(`error: ${JSON.stringify(e)}`);
-          console.log('At login with redirect.');
+          log.error(`error: ${JSON.stringify(e)}`);
+          log.info('At login with redirect.');
           return false;
         }
       }
       if (url.startsWith('https://access.paylocity.com/?')) {
-        console.log('waiting...');
+        log.info('waiting...');
         await this.page.waitForURL(paylocityImpressionsUrl);
         url = await this.page.url();
-        console.log(`isLoggedIn.url: ${url}`);
+        log.info(`isLoggedIn.url: ${url}`);
       }
       // await this.page.waitForTimeout(10000); // pause
     } catch (e) {
-      console.error(`error: ${JSON.stringify(e)}`);
+      log.error(`error: ${JSON.stringify(e)}`);
       return false;
     }
     url = await this.page.url();
-    console.log(`url after paylocity.isLoggedIn.try: ${url}`);
+    log.info(`url after paylocity.isLoggedIn.try: ${url}`);
     if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
       try {
         this.page.waitForNavigation();
         url = await this.page.url();
       } catch (e) {
-        console.error(`error: ${JSON.stringify(e)}`);
+        log.error(`error: ${JSON.stringify(e)}`);
         // await this.browser.stopTracing();
         return false;
       }
@@ -143,7 +144,7 @@ class Paylocity {
       this.successfulLoginTasks();
       return true;
     }
-    console.log('end of isLoggedIn()');
+    log.info('end of isLoggedIn()');
     return false;
   };
 
@@ -171,7 +172,7 @@ class Paylocity {
     };
 
     const loggedIn = await this.isLoggedIn();
-    console.log(`loggedIn: ${loggedIn}`);
+    log.info(`loggedIn: ${loggedIn}`);
 
     if (loggedIn) {
       this.successfulLoginTasks();
@@ -183,27 +184,25 @@ class Paylocity {
     }
 
     url = await this.page.url();
-    console.log(`url before startsWith: ${url}`);
+    log.info(`url before startsWith: ${url}`);
 
     await inputLogin();
 
     url = await this.page.url();
-    console.log(`url after inputLogin: ${url}`);
+    log.info(`url after inputLogin: ${url}`);
     if (url === 'https://access.paylocity.com/ChallengeQuestion') {
       // <label for="ChallengeAnswer">This is the Challenge Question</label>
-      console.log('url: challengequestion');
+      log.info('url: challengequestion');
       message = await this.page.locator('[for="ChallengeAnswer"]').innerText();
-      console.log(message);
+      log.info(message);
       return { loggedIn: false, status: LoginStatus.Challenge, message };
     }
 
     // check for incorrect pw
     const incorrectCredentials = url === 'https://access.paylocity.com/';
-    console.log(
-      `incorrectCredentials: ${JSON.stringify(incorrectCredentials)}`
-    );
+    log.info(`incorrectCredentials: ${JSON.stringify(incorrectCredentials)}`);
     if (incorrectCredentials) {
-      console.log('Incorrect creds!');
+      log.info('Incorrect creds!');
       message = 'The credentials provided are incorrect';
       this.loggedIn = false;
       return {
@@ -245,13 +244,13 @@ class Paylocity {
       await this.page.click('text=Submit');
 
       url = await this.page.url();
-      console.log(`url: ${url}`);
+      log.info(`url: ${url}`);
       if (url === 'https://access.paylocity.com/ChallengeQuestion') {
         // <label for="ChallengeAnswer">This is the Challenge Question</label>
         const message = await this.page
           .locator('[for="ChallengeAnswer"]')
           .innerText();
-        console.log(message);
+        log.info(message);
         this.loggedIn = false;
         return {
           loggedIn: this.loggedIn,
@@ -262,7 +261,7 @@ class Paylocity {
 
       await this.page.waitForURL('https://access.paylocity.com/**');
     } catch (e) {
-      console.log(`error: ${JSON.stringify(e)}`);
+      log.info(`error: ${JSON.stringify(e)}`);
       this.loggedIn = false;
       return {
         loggedIn: this.loggedIn,
@@ -272,16 +271,16 @@ class Paylocity {
     }
 
     url = await this.page.url();
-    console.log(`tryChallenge.url after waitForUrl = ${url}`);
+    log.info(`tryChallenge.url after waitForUrl = ${url}`);
     if (url !== paylocityImpressionsUrl) {
-      console.log('tryChallenge.url not at impressions');
+      log.info('tryChallenge.url not at impressions');
       await this.page.waitForNavigation();
       url = await this.page.url();
-      console.log(`tryChallenge.url.goto impressions = ${url}`);
+      log.info(`tryChallenge.url.goto impressions = ${url}`);
       if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
         await this.page.waitForNavigation();
         url = await this.page.url();
-        console.log(`tryChallenge.goto.waitForNavigation.url: ${url}`);
+        log.info(`tryChallenge.goto.waitForNavigation.url: ${url}`);
         await this.page.goto(paylocityImpressionsUrl);
       }
     }
@@ -296,7 +295,7 @@ class Paylocity {
 
   public sendImpression = async (): Promise<boolean> => {
     let url;
-    console.log(`loggedIn: ${this.loggedIn}`);
+    log.info(`loggedIn: ${this.loggedIn}`);
     if (!this.loggedIn) {
       await this.login();
       return false;
@@ -313,20 +312,20 @@ class Paylocity {
       });
     } catch (e) {
       // first time
-      console.log(`error: ${JSON.stringify(e)}`);
+      log.info(`error: ${JSON.stringify(e)}`);
       this.pageImpressions = await this.browserImpressions.newPage();
       await this.pageImpressions.context().storageState({ path: 'state.json' });
     }
 
     url = await this.pageImpressions.url();
-    console.log(`sendImpression.loadState.url: ${url}`);
+    log.info(`sendImpression.loadState.url: ${url}`);
     if (url !== paylocityImpressionsUrl) {
       await this.pageImpressions.goto(paylocityImpressionsUrl);
-      console.log(`sendImpression.goto.url: ${url}`);
+      log.info(`sendImpression.goto.url: ${url}`);
       if (url === 'https://access.paylocity.com/SignIn?fromSso=True') {
         await this.pageImpressions.waitForNavigation();
         url = await this.pageImpressions.url();
-        console.log(`sendImpression.goto.waitForNavigation.url: ${url}`);
+        log.info(`sendImpression.goto.waitForNavigation.url: ${url}`);
       }
     }
 
